@@ -5,6 +5,7 @@ import (
   "log"
   "strings"
   "net"
+  "os"
 )
 
 func main() {
@@ -15,6 +16,11 @@ func main() {
   hostname := strings.TrimSpace(string(data)) + ".cs.binghamton.edu"
   portNum := "8090"
   fmt.Printf("Hostname = %s, Port = %s\nStarting server...\n", hostname, portNum)
+  if _, err := os.Stat("www"); err != nil {
+        if os.IsNotExist(err) {
+	  log.Fatal("www directory not present. Cannot instantiate the http server(as per the requirements)")
+	}
+  }
   ln, err := net.Listen("tcp", ":"+portNum)
   if err != nil {
     log.Print("Unable to create a listening server. Please check if anything is wrong!")
@@ -32,4 +38,5 @@ func main() {
 
 func handleConnection(conn net.Conn) {
   fmt.Printf("The address of the client is as follows: ", string(conn.RemoteAddr().String()))
+  fmt.Println(conn)
 }
