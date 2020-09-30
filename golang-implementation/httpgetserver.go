@@ -76,7 +76,7 @@ func handleConnection(conn net.Conn) {
   log.Print(response)
   // TODO: build HTTP repsonse 
   // logging the required output in the required format
-  printLog(clientAddr, data[1:], count)
+  printLog(clientAddr, data, count)
 }
 
 func printLog(clientAddr string, resource string, count int) {
