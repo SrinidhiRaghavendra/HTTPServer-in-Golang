@@ -59,5 +59,4 @@ Saving to: ‘emptyFile.txt’
 
 emptyFile.txt                                    [ <=>                                                                                         ]       0  --.-KB/s    in 0s      
 
-Last-modified header invalid -- time-stamp ignored.
 2020-10-01 16:02:59 (0.00 B/s) - ‘emptyFile.txt’ saved [0/0] 

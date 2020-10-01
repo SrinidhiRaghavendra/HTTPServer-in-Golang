@@ -112,9 +112,9 @@ func handleConnection(conn net.Conn) {
 
 func buildHTTPHeader(response string, fileLastModified time.Time, contentType string, contentLength int64) string {
   header := "HTTP/1.1 " + response + "\n"
-  header = header + "Date: " + time.Now().UTC().Format(time.RFC1123) + "\n"
+  header = header + "Date: " + strings.Replace(time.Now().UTC().Format(time.RFC1123),"UTC", "GMT", 1) + "\n" //Have to keep it in GMT, otherwise wget will give header invalid error, same for Last-Modified
   header = header + "Server: CS557/assignment1/1" + "\n"
-  header = header + "Last-Modified: " + fileLastModified.UTC().Format(time.RFC1123) + "\n"
+  header = header + "Last-Modified: " + strings.Replace(fileLastModified.UTC().Format(time.RFC1123), "UTC", "GMT", 1) + "\n"
   header = header + "Content-Type: " + contentType + "\n"
   header = header + "Content-Length: " + strconv.FormatInt(contentLength, 10) + "\n\n" //The second new line is to indicate the end of header
   return header
