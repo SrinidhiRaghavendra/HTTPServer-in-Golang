@@ -9,6 +9,8 @@ import (
   "bufio"
   "sync"
   "strconv"
+  "time"
+  "mime"
 )
 
 type AccessCounter struct {
@@ -43,6 +45,7 @@ func main() {
     if err != nil {
 	    log.Print("Error while accepting the request. The details of the of the client are as follows: ", conn.RemoteAddr().String())
     }
+
     go handleConnection(conn)
   }
 }
@@ -63,20 +66,48 @@ func handleConnection(conn net.Conn) {
   }
   filename := "www"+data
   count := accessCounter.updateCount(filename)
-  log.Print("Access count: ", count)
   response := ""
-  log.Print("Searching for Requested resource: ", data)
-  if _, err := os.Stat(filename); err != nil {
-        if os.IsNotExist(err) {
-	  response = "404 Not Found"
-	} else {
-	  response = "200 OK"
-	}
+  var fileLastModified time.Time
+  var contentType string
+  var contentLength int64
+  var httpHeader string
+  if stats, err := os.Stat(filename); err != nil {
+    if os.IsNotExist(err) {
+      response = "404 Not Found"
+      httpHeader = "HTTP/1.1 " + response + "\n"
+      //TODO: send just this in the connection
+    }
+  } else {
+    response = "200 OK"
+    fileLastModified = stats.ModTime()
+    resourceParts := strings.Split(data, ".")
+    if len(resourceParts) == 1 {
+      contentType = "application/octet-stream"
+    } else {
+      extension := resourceParts[len(resourceParts)-1]
+      contentType = mime.TypeByExtension("." + extension)
+      if len(contentType) == 0 {
+        contentType = "application/octet-stream"
+      }
+    }
+    contentLength = stats.Size()
+    httpHeader = buildHTTPHeader(response, fileLastModified, contentType, contentLength)
+      //TODO: send the file contents along with the 
   }
-  log.Print(response)
-  // TODO: build HTTP repsonse 
+  log.Print(httpHeader)
   // logging the required output in the required format
+  conn.Close()
   printLog(clientAddr, data, count)
+}
+
+func buildHTTPHeader(response string, fileLastModified time.Time, contentType string, contentLength int64) string {
+  header := "HTTP/1.1 " + response + "\n"
+  header = header + "Date: " + time.Now().UTC().Format(time.RFC1123) + "\n"
+  header = header + "Server: CS557/assignment1/1" + "\n"
+  header = header + "Last-Modified: " + fileLastModified.UTC().Format(time.RFC1123) + "\n"
+  header = header + "Content-Type: " + contentType + "\n"
+  header = header + "Content-Length: " + strconv.FormatInt(contentLength, 10) + "\n\n" //The second new line is to indicate the end of header
+  return header
 }
 
 func printLog(clientAddr string, resource string, count int) {
