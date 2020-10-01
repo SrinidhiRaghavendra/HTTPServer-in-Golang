@@ -1,6 +1,7 @@
 package main
 import (
   "fmt"
+  "io"
   "io/ioutil"
   "log"
   "strings"
@@ -75,7 +76,8 @@ func handleConnection(conn net.Conn) {
     if os.IsNotExist(err) {
       response = "404 Not Found"
       httpHeader = "HTTP/1.1 " + response + "\n"
-      //TODO: send just this in the connection
+      bytesToTransfer := []byte(httpHeader)
+      conn.Write(bytesToTransfer)
     }
   } else {
     response = "200 OK"
@@ -92,10 +94,18 @@ func handleConnection(conn net.Conn) {
     }
     contentLength = stats.Size()
     httpHeader = buildHTTPHeader(response, fileLastModified, contentType, contentLength)
-      //TODO: send the file contents along with the 
+    bytesToTransfer := []byte(httpHeader)
+    conn.Write(bytesToTransfer)
+    file, err := os.Open(strings.TrimSpace(filename)) // For read access.
+    if err != nil {
+      log.Fatal(err)
+    }
+    defer file.Close() // make sure to close the file even if we panic.
+    _, err = io.Copy(conn, file)
+    if err != nil {
+      log.Print(err)
+    }
   }
-  log.Print(httpHeader)
-  // logging the required output in the required format
   conn.Close()
   printLog(clientAddr, data, count)
 }
